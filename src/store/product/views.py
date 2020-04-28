@@ -19,7 +19,14 @@ from .models import Allproduct
 
 def APIAllproduct(request):
     allproduct = Allproduct.objects.all()
-    print(allproduct)
+    #print(allproduct)
     serializer = AllproductSerializer(allproduct, many=True)
     return JsonResponse(serializer.data, safe=False, json_dumps_params={'ensure_ascii':False})
+
+
+def APIProduct(request, pk):
+    singleproduct = Allproduct.objects.get(id=pk)
+    serializer = AllproductSerializer(singleproduct)
+    return JsonResponse(serializer.data, safe=True, json_dumps_params={'ensure_ascii':False})
+
 ##########################
