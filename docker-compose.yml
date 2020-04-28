@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+    app:
+        build:
+            context: .
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./src:/src
+        command:
+            sh -c "python store/manage.py runserver 0.0.0.0:8000"
+        # command: python store/manage.py runserver 0.0.0.0:8000
+#docker-compose build
+#docker-compose run [app (line 4)] sh -c "django-admin.py startproject apiprotect ."
+#docker-compose run app sh -c "django-admin.py startproject apiprotect ."
+#docker-compose run app python store/manage.py migrate or 
+#docker-compose run app sh -c "python store/manage.py migrate"
+#docker-compose run app sh -c "python store/manage.py createsuperuser"
+#docker-compose run app sh -c "cd store && python manage.py startapp product"
+#docker-compose run app sh -c "cd store && python manage.py makemigrations && python manage.py migrate"
+#docker-compose run app sh -c "cd store && "
+#docker-compose up -d
+
+
