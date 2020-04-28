@@ -30,3 +30,21 @@ def APIProduct(request, pk):
     return JsonResponse(serializer.data, safe=True, json_dumps_params={'ensure_ascii':False})
 
 ##########################
+###########API Post#######
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+@api_view(['POST', ])
+
+def api_post_allproduct(request):
+    allproduct = Allproduct()
+    if request.method == 'POST':
+        serializer = AllproductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+##########################

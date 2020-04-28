@@ -1,0 +1,252 @@
+pip install virtualenv
+virtualenv venv
+.\venv\script\active.bat
+django-admin startproject store
+python manage.py runserver 0.0.0.0:8000
+python manage.py migrate
+python manage.py createsuperuser
+---------------------------------------------
+-store
+	- product
+	- user
+---------------------------------------------
+python manage.py startapp product
+
+edit product/models.py
+พิมพ์ตาม
+---------------------------------------------
+
+class Allproduct(models.Model):
+    #name database == Allproduct
+    product_name = models.CharField(max_length=200)
+    product_price = models.CharField(max_length=200)
+
+---------------------------------------------
+edit product/admin.py
+พิมพ์ตาม
+---------------------------------------------
+
+from .models import Allproduct
+
+admin.site.register(Allproduct)
+
+---------------------------------------------
+edit store/settings.py
+ประมาณบรรทัด 33 จะเห็น INSTALLED_APPS
+ให้เพิ่ม productเข้าไป
+และ บรรทัด 28 ใส่ ALLOWED_HOSTS = ['*'] ด้วย
+---------------------------------------------
+
+INSTALLED_APPS = [
+    'product',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+]
+
+
+---------------------------------------------
+python manage.py makemigrations
+python manage.py migrate
+edit product/models.py
+พิมพ์ตาม
+---------------------------------------------
+
+def __str__(self):
+        return self.product_name + '-' + self.product_price
+
+---------------------------------------------
+new folder name template in product and new folder name same appication {product} in template
+create file base.html in product/template/product
+---------------------------------------------
+paste code html 
+---------------------------------------------
+edit store/settings.py
+ประมาณบรรทัด 55 จะเห็น TEMPLATES
+ให้แก้ให้เป็นเหมือนด้านล่าง
+---------------------------------------------
+
+'DIRS': [os.path.join(BASE_DIR, 'product/template')],
+
+---------------------------------------------
+edit product/views.py
+พิมพ์ตาม
+---------------------------------------------
+
+from django.http import HttpResponse
+
+def Home(request):
+    return HttpResponse('<h1>Hello world</h1>')
+
+---------------------------------------------
+edit store/urls.py
+พิมพ์ตาม
+---------------------------------------------
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('product.urls'))
+]
+
+---------------------------------------------
+create file name urls.py in product
+edit 
+---------------------------------------------
+
+from django.urls import path
+from .views import Home
+urlpatterns = [
+    path('', Home),
+]
+
+---------------------------------------------
+
+try runserver you will see word "Hello world"
+#skip
+edit product/views.py
+แก้ไขตาม
+---------------------------------------------
+
+from django.http import HttpResponse
+
+def Home(request):
+    return render(request,'product/base.html')
+    #return HttpResponse('<h1>Hello world</h1>')
+
+---------------------------------------------
+
+create file name home.html in product/template/product
+---------------------------------------------
+
+{% extends 'product/base.html' %}
+
+{% block content %}
+
+{% endblock content %}
+
+---------------------------------------------
+extends เหมือนดูดหน้าbase.htmlทั้งหน้า
+พวกhtml ที่ทำมาคือการแยกเนื้อหา
+#endskip
+---------api---------------------------------
+
+edit store/settings.py
+ประมาณบรรทัด 33 มองหา INSTALLED_APPS
+---------------------------------------------
+
+'rest_framework',
+
+---------------------------------------------
+
+create file name serializers.py in product
+---------------------------------------------
+
+from rest_framework import serializers
+from .models import Allproduct
+
+class AllproductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Allproduct
+        fields = ('id', 'product_name', 'product_price')
+
+---------------------------------------------
+edit product/views.py
+add code 
+---------------------------------------------
+
+#########API##############
+
+from django.http import JsonResponse
+from .serializers import AllproductSerializer
+from .models import Allproduct
+
+def APIAllproduct(request):
+    allproduct = Allproduct.objects.all()
+    print(allproduct)
+    serializer = AllproductSerializer(allproduct, many=True)
+    return JsonResponse(serializer.data, safe=False)
+##########################
+
+---------------------------------------------
+edit product/urls.py
+---------------------------------------------
+
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('product.urls'))
+]
+
+---------------------------------------------
+ต่อไปเราจะส่งค่า id และให้แสดงผลเฉพาะ id นั้นๆ
+edit product/views.py
+add code 
+---------------------------------------------
+
+def APIProduct(request, pk):
+    singleproduct = Allproduct.objects.get(id=pk)
+    serializer = AllproductSerializer(singleproduct)
+    return JsonResponse(serializer.data, safe=True, json_dumps_params={'ensure_ascii':False})
+
+---------------------------------------------
+edit product/urls.py
+---------------------------------------------
+
+from django.urls import path
+from .views import Home, About, APIAllproduct, APIProduct
+urlpatterns = [
+    path('', Home, name='home-page'),
+    path('about/', About, name='about-page'),
+    path('apiproduct/', APIAllproduct, name='api-product'),
+    path('apisingle/<int:pk>/', APIProduct)
+
+]
+
+---------------------------------------------
+part 2
+edit product/views.py
+---------------------------------------------
+
+###########API Post#######
+
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
+@api_view(['POST', ])
+
+def api_post_allproduct(request):
+    allproduct = Allproduct()
+    if request.method == 'POST':
+        serializer = AllproductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+##########################
+
+---------------------------------------------
+eidt product/urls.py
+---------------------------------------------
+
+from django.urls import path
+from .views import Home, About, APIAllproduct, APIProduct, api_post_allproduct
+urlpatterns = [
+    path('', Home, name='home-page'),
+    path('about/', About, name='about-page'),
+    path('apiproduct/', APIAllproduct, name='api-product'),
+    path('apisingle/<int:pk>/', APIProduct),
+    path('api/create', api_post_allproduct)
+
+]
+
+---------------------------------------------
